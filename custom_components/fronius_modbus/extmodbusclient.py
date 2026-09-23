@@ -11,11 +11,21 @@ import asyncio
 
 from pymodbus.client import AsyncModbusTcpClient
 try:
-    # For newer pymodbus versions (3.9.x+)
+    # pymodbus 3.9.x+
     from pymodbus.pdu.pdu import unpack_bitstring
 except ImportError:
-    # For older pymodbus versions (3.8.x and below)
-    from pymodbus.utilities import unpack_bitstring
+    try:
+        # pymodbus 3.8.x and below
+        from pymodbus.utilities import unpack_bitstring
+    except ImportError:
+        # pymodbus 3.11.x+ removed the function entirely – use local fallback
+        def unpack_bitstring(data: bytes) -> list:
+            """Unpack a bytestring into a list of booleans (one per bit)."""
+            bits = []
+            for byte in data:
+                for bit in range(8):
+                    bits.append(bool(byte & (1 << bit)))
+            return bits
 from pymodbus.exceptions import ModbusIOException, ConnectionException
 from pymodbus import ExceptionResponse
 
