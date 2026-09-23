@@ -314,8 +314,11 @@ class FroniusModbusClient(ExtModbusClient):
         else:
             pv_power = None
 
-        mppt1_lfte = self.calculate_value(module_1_DCWH, DCWH_SF)
-        mppt2_lfte = self.calculate_value(module_2_DCWH, DCWH_SF)
+        # Upper bound: 5 GWh per string is physically impossible for this inverter class.
+        # Values above this are garbage from uninitialized registers during sleep mode.
+        _LFTE_MAX_WH = 5_000_000_000
+        mppt1_lfte = self.calculate_value(module_1_DCWH, DCWH_SF, upper_bound=_LFTE_MAX_WH)
+        mppt2_lfte = self.calculate_value(module_2_DCWH, DCWH_SF, upper_bound=_LFTE_MAX_WH)
 
         self.data['mppt1_power'] = mppt1_power
         self.data['mppt2_power'] = mppt2_power
@@ -337,8 +340,8 @@ class FroniusModbusClient(ExtModbusClient):
             else:
                 storage_power = None
         
-            mppt3_lfte = self.calculate_value(module_3_DCWH, DCWH_SF)
-            mppt4_lfte = self.calculate_value(module_4_DCWH, DCWH_SF)
+            mppt3_lfte = self.calculate_value(module_3_DCWH, DCWH_SF, upper_bound=_LFTE_MAX_WH)
+            mppt4_lfte = self.calculate_value(module_4_DCWH, DCWH_SF, upper_bound=_LFTE_MAX_WH)
 
             self.data['mppt3_power'] = mppt3_power
             self.data['mppt4_power'] = mppt4_power

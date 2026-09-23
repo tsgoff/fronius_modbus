@@ -285,15 +285,16 @@ class ExtModbusClient:
                 _LOGGER.debug(f'calculate_value: sunspec NaN scale factor value={value} sf={sf}')
                 return None
             # Sanity-check the scale factor (valid SunSpec range is -10..+10).
+            # Out-of-range SF is common during inverter sleep — log at DEBUG only.
             if sf > 10 or sf < -10:
-                _LOGGER.error(f'calculate_value: scale factor out of range value={value} sf={sf}')
+                _LOGGER.debug(f'calculate_value: scale factor out of range value={value} sf={sf}')
                 return None
             rvalue = round(value * 10**sf, digits)
             if lower_bound is not None and rvalue < lower_bound:
-                _LOGGER.warning(f'calculate_value: {rvalue} below lower bound {lower_bound} (value={value} sf={sf})')
+                _LOGGER.debug(f'calculate_value: {rvalue} below lower bound {lower_bound} (value={value} sf={sf})')
                 return None
             if upper_bound is not None and rvalue > upper_bound:
-                _LOGGER.warning(f'calculate_value: {rvalue} above upper bound {upper_bound} (value={value} sf={sf})')
+                _LOGGER.debug(f'calculate_value: {rvalue} above upper bound {upper_bound} (value={value} sf={sf})')
                 return None
             return rvalue
         else:
