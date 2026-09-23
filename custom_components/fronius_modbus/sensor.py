@@ -7,11 +7,9 @@ from typing import Optional, Dict, Any
 from homeassistant.components.sensor import (
     SensorEntity,
 )
-from homeassistant.const import CONF_NAME #, CONF_HOST, CONF_PORT, CONF_SCAN_INTERVAL
+from homeassistant.const import CONF_NAME
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.icon import icon_for_battery_level
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.entity import Entity
 from homeassistant.core import callback
 from homeassistant.util import slugify
 
