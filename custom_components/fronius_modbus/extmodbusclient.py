@@ -260,13 +260,22 @@ class ExtModbusClient:
 
     def calculate_value(self, value, sf, digits=2, lower_bound = None, upper_bound = None):
         if self.is_numeric(value) and self.is_numeric(sf):
+            # Guard against absurdly large exponents (bad register reads) that
+            # would produce integers Python 3.11+ refuses to stringify.
+            if sf > 10 or sf < -10:
+                _LOGGER.error(f'calculate_value: scale factor out of range value: {value} sf: {sf}')
+                return None
             rvalue = round(value * 10**sf, digits)
+            try:
+                rvalue_str = str(rvalue)
+            except ValueError:
+                rvalue_str = f'<value too large to display, value={value}, sf={sf}>'
             if not lower_bound is None and rvalue < lower_bound:
-                _LOGGER.error(f'calculated value: {rvalue} below lower bound {lower_bound} value: {value} sf: {sf} digits {digits}', stack_info=True)
+                _LOGGER.error(f'calculated value: {rvalue_str} below lower bound {lower_bound} value: {value} sf: {sf} digits {digits}', stack_info=True)
                 return None
             if not upper_bound is None and rvalue > upper_bound:
-                _LOGGER.error(f'calculated value: {rvalue} above upper bound {upper_bound} value: {value} sf: {sf} digits {digits}', stack_info=True)
-                return None                    
+                _LOGGER.error(f'calculated value: {rvalue_str} above upper bound {upper_bound} value: {value} sf: {sf} digits {digits}', stack_info=True)
+                return None
             return round(value * 10**sf, digits)
         else:
             _LOGGER.debug(f'cannot calculate non numeric value: {value} sf: {sf} digits {digits}', stack_info=True)

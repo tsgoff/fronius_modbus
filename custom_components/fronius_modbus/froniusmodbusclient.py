@@ -202,7 +202,7 @@ class FroniusModbusClient(ExtModbusClient):
         self.data["line_frequency"] = self.calculate_value(Hz, Hz_SF, 2, 0, 100)
         self.data["acenergy"] = self.calculate_value(WH, WH_SF) 
         #self.data["status"] = INVERTER_STATUS[St]
-        self.data["statusvendor"] = FRONIUS_INVERTER_STATUS[StVnd]
+        self.data["statusvendor"] = FRONIUS_INVERTER_STATUS.get(StVnd, f'Unknown ({StVnd})')
         self.data["statusvendor_id"] = StVnd
         #self.data["events1"] = self.bitmask_to_string(EvtVnd1,INVERTER_EVENTS,default='None',bits=32)  
         self.data["events2"] = self.bitmask_to_string(EvtVnd2,INVERTER_EVENTS,default='None',bits=32)  
@@ -282,10 +282,10 @@ class FroniusModbusClient(ExtModbusClient):
         OutPFSet_Ena = self._client.convert_from_registers(regs[12:13], data_type = self._client.DATATYPE.UINT16)
         VArPct_Ena = self._client.convert_from_registers(regs[20:21], data_type = self._client.DATATYPE.INT16)
 
-        self.data['Conn'] = CONTROL_STATUS[Conn]
-        self.data['WMaxLim_Ena'] = CONTROL_STATUS[WMaxLim_Ena]
-        self.data['OutPFSet_Ena'] = CONTROL_STATUS[OutPFSet_Ena]
-        self.data['VArPct_Ena'] = CONTROL_STATUS[VArPct_Ena]
+        self.data['Conn'] = CONTROL_STATUS.get(Conn, f'Unknown ({Conn})')
+        self.data['WMaxLim_Ena'] = CONTROL_STATUS.get(WMaxLim_Ena, f'Unknown ({WMaxLim_Ena})')
+        self.data['OutPFSet_Ena'] = CONTROL_STATUS.get(OutPFSet_Ena, f'Unknown ({OutPFSet_Ena})')
+        self.data['VArPct_Ena'] = CONTROL_STATUS.get(VArPct_Ena, f'Unknown ({VArPct_Ena})')
 
         return True
 
