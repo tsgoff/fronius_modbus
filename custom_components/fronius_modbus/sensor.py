@@ -2,16 +2,10 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, Dict, Any
 
-from homeassistant.components.sensor import (
-    SensorEntity,
-)
-from homeassistant.const import CONF_NAME
-from homeassistant.core import HomeAssistant
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.core import callback
-from homeassistant.util import slugify
 
 from . import HubConfigEntry
 from .const import (
