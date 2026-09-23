@@ -246,9 +246,9 @@ class FroniusModbusClient(ExtModbusClient):
 
         StActCtl = self._client.convert_from_registers(regs[33:35], data_type = self._client.DATATYPE.UINT32)
         
-        self.data['pv_connection'] = CONNECTION_STATUS_CONDENSED[PVConn]
-        self.data['storage_connection'] = CONNECTION_STATUS_CONDENSED[StorConn] 
-        self.data['ecp_connection'] = ECP_CONNECTION_STATUS[ECPConn]
+        self.data['pv_connection'] = CONNECTION_STATUS_CONDENSED.get(PVConn, f'Unknown ({PVConn})')
+        self.data['storage_connection'] = CONNECTION_STATUS_CONDENSED.get(StorConn, f'Unknown ({StorConn})')
+        self.data['ecp_connection'] = ECP_CONNECTION_STATUS.get(ECPConn, f'Unknown ({ECPConn})')
         self.data['inverter_controls'] = self.bitmask_to_string(StActCtl, INVERTER_CONTROLS, 'Normal')  
 
         return True

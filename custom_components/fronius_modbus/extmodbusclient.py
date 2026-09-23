@@ -31,6 +31,19 @@ from pymodbus import ExceptionResponse
 
 _LOGGER = logging.getLogger(__name__)
 
+# SunSpec "not implemented" sentinel values – registers containing these values
+# must be treated as unavailable, not as real measurements.
+_SUNSPEC_NAN_INT16  = -32768       # 0x8000
+_SUNSPEC_NAN_UINT16 = 65535        # 0xFFFF
+_SUNSPEC_NAN_INT32  = -2147483648  # 0x80000000
+_SUNSPEC_NAN_UINT32 = 4294967295   # 0xFFFFFFFF
+_SUNSPEC_NAN_VALUES = frozenset({
+    _SUNSPEC_NAN_INT16,
+    _SUNSPEC_NAN_UINT16,
+    _SUNSPEC_NAN_INT32,
+    _SUNSPEC_NAN_UINT32,
+})
+
 class ExtModbusClient:
 
     def __init__(self, host: str, port: int, unit_id: int, timeout: int, framer:str = None) -> None:
@@ -258,27 +271,33 @@ class ExtModbusClient:
             return ','.join(strings)[:max_length]
         return default
 
-    def calculate_value(self, value, sf, digits=2, lower_bound = None, upper_bound = None):
+    def is_sunspec_nan(self, value) -> bool:
+        """Return True if value is a SunSpec not-implemented sentinel."""
+        return value in _SUNSPEC_NAN_VALUES
+
+    def calculate_value(self, value, sf, digits=2, lower_bound=None, upper_bound=None):
         if self.is_numeric(value) and self.is_numeric(sf):
-            # Guard against absurdly large exponents (bad register reads) that
-            # would produce integers Python 3.11+ refuses to stringify.
+            # Reject SunSpec not-implemented sentinels.
+            if self.is_sunspec_nan(value):
+                _LOGGER.debug(f'calculate_value: sunspec NaN value={value} sf={sf}')
+                return None
+            if self.is_sunspec_nan(sf) or sf == _SUNSPEC_NAN_INT16:
+                _LOGGER.debug(f'calculate_value: sunspec NaN scale factor value={value} sf={sf}')
+                return None
+            # Sanity-check the scale factor (valid SunSpec range is -10..+10).
             if sf > 10 or sf < -10:
-                _LOGGER.error(f'calculate_value: scale factor out of range value: {value} sf: {sf}')
+                _LOGGER.error(f'calculate_value: scale factor out of range value={value} sf={sf}')
                 return None
             rvalue = round(value * 10**sf, digits)
-            try:
-                rvalue_str = str(rvalue)
-            except ValueError:
-                rvalue_str = f'<value too large to display, value={value}, sf={sf}>'
-            if not lower_bound is None and rvalue < lower_bound:
-                _LOGGER.error(f'calculated value: {rvalue_str} below lower bound {lower_bound} value: {value} sf: {sf} digits {digits}', stack_info=True)
+            if lower_bound is not None and rvalue < lower_bound:
+                _LOGGER.warning(f'calculate_value: {rvalue} below lower bound {lower_bound} (value={value} sf={sf})')
                 return None
-            if not upper_bound is None and rvalue > upper_bound:
-                _LOGGER.error(f'calculated value: {rvalue_str} above upper bound {upper_bound} value: {value} sf: {sf} digits {digits}', stack_info=True)
+            if upper_bound is not None and rvalue > upper_bound:
+                _LOGGER.warning(f'calculate_value: {rvalue} above upper bound {upper_bound} (value={value} sf={sf})')
                 return None
-            return round(value * 10**sf, digits)
+            return rvalue
         else:
-            _LOGGER.debug(f'cannot calculate non numeric value: {value} sf: {sf} digits {digits}', stack_info=True)
+            _LOGGER.debug(f'calculate_value: non-numeric value={value} sf={sf}')
         return None
 
     def is_numeric(self, value):
